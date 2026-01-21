@@ -1,0 +1,11 @@
+services:
+  linux:
+    build: .
+    container_name: linux-server
+    privileged: true
+    ports:
+      - "2222:22"
+    volumes:
+      - ./example:/example
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    tty: true
