@@ -1,0 +1,12 @@
+services:
+  jupyter:
+    build: .
+    container_name: pandas-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/workspace/notebooks
+      - ./pandas:/workspace/pandas
+    environment:
+      - PYTHONPATH=/workspace
+    restart: unless-stopped
