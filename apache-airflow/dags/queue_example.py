@@ -5,7 +5,7 @@ from datetime import datetime
 
 with DAG(
     dag_id="queue_example",
-    schedule=@daily,
+    schedule="@daily",
     start_date=datetime(2023, 1, 1),
     catchup=False) as dag:
     
@@ -21,4 +21,4 @@ with DAG(
         bash_command='sleep 20'
     )
 
-task_producer1 >> task_producer2
+    task_producer1 >> task_producer2
