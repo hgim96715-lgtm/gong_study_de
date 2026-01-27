@@ -2,37 +2,33 @@ FROM ubuntu:22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# 기본 패키지
+# [기본 패키지 설치] 
 RUN apt-get update && apt-get install -y \
-    openssh-server \
-    sudo \
-    systemd \
-    systemd-sysv \
-    cron \
-    vim \
-    net-tools \
-    iputils-ping \
-    curl \
-    wget \
-    man-db \
-    plocate \
-    dumb-init \
+    openssh-server sudo systemd systemd-sysv cron \
+    vim net-tools iputils-ping curl wget man-db plocate dumb-init \
     && apt-get clean
 
-# SSH 설정
-RUN mkdir /var/run/sshd
+# [유저 생성 및 권한 부여] 
+RUN useradd -m -s /bin/bash ubuntu && \
+    echo 'ubuntu:ubuntu' | chpasswd && \
+    adduser ubuntu sudo
 
-# root 비밀번호 설정 (실습용)
+# [시스템 설정] 
+RUN mkdir /var/run/sshd
 RUN echo 'root:root' | chpasswd
 
-# systemd 최소 동작용
-VOLUME ["/sys/fs/cgroup"]
-
-# bootstrap 스크립트 복사
+# [파일 복사 및 권한 설정]  
 COPY bootstrap.sh /root/bootstrap.sh
 RUN chmod +x /root/bootstrap.sh
 
+# [볼륨 및 포트 설정]
+VOLUME ["/sys/fs/cgroup"]
 EXPOSE 22
 
+# [유저 전환] 
+USER ubuntu
+WORKDIR /home/ubuntu
+
+# [실행]
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/root/bootstrap.sh"]
+CMD ["sudo", "/root/bootstrap.sh"] 
