@@ -1,0 +1,4 @@
+pandas
+numpy
+pyarrow
+pyspark==3.5.1 # Spark 버전에 맞는 pyspark 버전 사용
