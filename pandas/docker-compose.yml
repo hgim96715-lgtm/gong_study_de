@@ -6,6 +6,7 @@ services:
       - "8888:8888"
     volumes:
       - ./notebooks:/workspace/notebooks
+      - ./data:/workspace/data
     environment:
       - PYTHONPATH=/workspace
     restart: unless-stopped
