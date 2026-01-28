@@ -20,7 +20,7 @@ services:
     depends_on:
       - spark-master
     volumes:
-      - ./data:/data
+      - ./data:/workspace/data
     networks:
       - spark-net
 
