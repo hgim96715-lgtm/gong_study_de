@@ -12,6 +12,8 @@ env.py
 *.crt
 id_rsa
 id_rsa.pub
+*.p12
+*.jks
 
 # 주요 서비스 비밀 파일
 secrets.json
@@ -21,6 +23,7 @@ token.json
 key.txt
 config_private.toml
 .streamlit/secrets.toml
+wandb/
 
 # =======================================================
 # 2. [Python] 실행 시 자동 생성되는 쓰레기들
@@ -35,6 +38,8 @@ __pycache__/
 htmlcov/
 .ipynb_checkpoints/
 *.pyc
+.dmypy.json
+dmypy.json
 
 # =======================================================
 # 3. [가상환경] 내 컴퓨터 전용 라이브러리 방
@@ -44,6 +49,9 @@ venv/
 env/
 ENV/
 .Python
+bin/
+lib/
+include/
 
 # =======================================================
 # 4. [데이터] Git은 코드가 아닌 데이터를 저장하지 않음
@@ -59,6 +67,7 @@ ENV/
 *.sqlite3
 *.h5
 *.hdf5
+*.orc
 
 # 데이터 폴더 통째로 막기 (추천)
 data/
@@ -66,6 +75,7 @@ outputs/
 downloads/
 raw_data/
 processed_data/
+checkpoints/
 
 # =======================================================
 # 5. [모델 & 피클] 용량 주범 & 보안 위험 (Model)
@@ -78,6 +88,9 @@ processed_data/
 *.pth
 *.model
 *.ckpt
+*.onnx
+*.pb
+*.safetensors
 
 # =======================================================
 # 6. [압축 파일] 바이너리 파일 차단 (Archives)
@@ -97,6 +110,7 @@ processed_data/
 npm-debug.log*
 yarn-debug.log*
 celerybeat-schedule
+*.pid
 
 # =======================================================
 # 8. [빌드/배포] 임시 파일 (Builds)
@@ -105,6 +119,7 @@ dist/
 build/
 *.egg-info/
 .eggs/
+MANIFEST
 
 # =======================================================
 # 9. [OS/IDE] 운영체제 및 에디터 설정 (System)
@@ -115,21 +130,31 @@ Thumbs.db
 .idea/
 *.swp
 *.iml
+.directory
 
 # =======================================================
-# 10. [Java/Spark] 스파크 사용 시 발생 (JVM)
+# 10. [Java/Spark] 스파크 사용 시 발생 (JVM & Local) 2/2 추가
 # =======================================================
 *.class
 *.jar
 *.war
 target/
 
+# 스파크/하둡 실행 결과물 (성공 플래그, CRC)
+_SUCCESS
+*.crc
+*.trashinfo
+
+# ⚠️ [중요] 로컬 스파크 실행 시 생기는 폴더들 (이거 빠지면 지저분해짐)
+spark-warehouse/
+metastore_db/
+derby.log
+
 # =======================================================
 # 11. [Airflow] Airflow 실행 부산물 및 설정 
 # =======================================================
-# 실행 로그 및 심볼릭 링크
+# 실행 로그
 logs/
-latest
 
 # 로컬 DB 및 설정 (보안상 절대 올리면 안 됨)
 airflow.db
@@ -138,9 +163,10 @@ webserver_config.py
 standalone_admin_password.txt
 airflow-webserver.pid
 
-# Docker 마운트용 빈 폴더 (필요시 주석 해제하여 사용)
-plugins/
-config/
+# ⚠️ Docker/개발 환경에 따라 무시할 수도, 올릴 수도 있는 것들
+# (일반적으로 dags, plugins는 코드를 올리고, 빈 폴더는 .gitkeep으로 유지)
+# plugins/
+# config/
 
 # =======================================================
 # ✅ [필수 허용] 예외 규칙 (Whitelist)
