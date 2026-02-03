@@ -150,6 +150,22 @@ spark-warehouse/
 metastore_db/
 derby.log
 
+
+#  데이터 결과물 폴더 무시
+data/transformed/
+transformed/
+
+# 체크포인트 폴더 무시
+chk/
+checkpoint/
+
+# 스파크 메타데이터 무시
+_spark_metadata/
+
+# 파이썬/주피터 임시 파일 무시
+__pycache__/
+.ipynb_checkpoints/
+
 # =======================================================
 # 11. [Airflow] Airflow 실행 부산물 및 설정 
 # =======================================================
