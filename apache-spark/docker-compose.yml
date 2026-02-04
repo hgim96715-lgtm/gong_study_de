@@ -65,6 +65,24 @@ services:
     networks:
       - spark-net
 
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+    volumes:
+      - cassandra-data:/var/lib/cassandra # 하단 volumes에 정의 필요
+    environment:
+      - CASSANDRA_CLUSTER_NAME=SparkCluster
+      - CASSANDRA_DC=datacenter1
+      - MAX_HEAP_SIZE=1G
+      - HEAP_NEWSIZE=200M
+    networks:
+      - spark-net
+
 networks:
   spark-net:
     driver: bridge
+
+volumes:
+  cassandra-data: # 카산드라 데이터 영구 저장소
