@@ -38,6 +38,7 @@ services:
       - "4040:4040" # Spark Job 모니터링 UI
     environment:
       - SPARK_MASTER=spark://spark-master:7077
+      - PYSPARK_SUBMIT_ARGS=--packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.3 --conf spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions --conf spark.sql.catalog.my_iceberg=org.apache.iceberg.spark.SparkCatalog --conf spark.sql.catalog.my_iceberg.type=hadoop --conf spark.sql.catalog.my_iceberg.warehouse=/workspace/data/iceberg_warehouse pyspark-shell
     depends_on:
       - spark-master
     networks:
