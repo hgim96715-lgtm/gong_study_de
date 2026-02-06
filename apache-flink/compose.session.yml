@@ -1,21 +1,23 @@
+version: "2.2"
 services:
   jobmanager:
     build: .
-    image: pyflink:2.2.0
+    image: pyflink:1.18.1
+    platform: linux/amd64 # 👈 [추가] "나 인텔 컴퓨터야!"라고 속임
     volumes:
       - ./playground:/opt/flink/playground
     ports:
-      - "8081:8081" # 호스트:8081 -> 컨테이너:8081 연결 (대시보드용)
+      - "8081:8081"
     command: jobmanager
     environment:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
-        python.executable: /usr/bin/python3
 
   taskmanager:
-    build: .
+    image: pyflink:1.18.1
+    platform: linux/amd64 # 👈 [추가] 여기도 똑같이!
     volumes:
       - ./playground:/opt/flink/playground
     depends_on:
@@ -27,4 +29,3 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
-        python.executable: /usr/bin/python3
