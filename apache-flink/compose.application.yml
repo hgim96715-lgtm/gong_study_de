@@ -1,0 +1,30 @@
+services:
+  jobmanager:
+    image: pyflink:2.2.0
+    ports:
+      - "8081:8081"
+
+    command: standalone-job --python /opt/flink/usrlib/my_job.py
+
+    volumes:
+      - ./src:/opt/flink/usrlib
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager  
+        parallelism.default: 2              
+
+  taskmanager:
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    scale: 1
+    volumes:
+      - ./src:/opt/flink/usrlib
+
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2   
+        parallelism.default: 2

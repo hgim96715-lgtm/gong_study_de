@@ -1,0 +1,30 @@
+services:
+  jobmanager:
+    build: .
+    image: pyflink:2.2.0
+    volumes:
+      - ./playground:/opt/flink/playground
+    ports:
+      - "8081:8081" # 호스트:8081 -> 컨테이너:8081 연결 (대시보드용)
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+        python.executable: /usr/bin/python3
+
+  taskmanager:
+    build: .
+    volumes:
+      - ./playground:/opt/flink/playground
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+        python.executable: /usr/bin/python3

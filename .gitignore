@@ -195,3 +195,8 @@ airflow-webserver.pid
 
 # 프로젝트 설정 파일도 필수
 !pyproject.toml
+
+
+# flink 
+# Ignore Gradle project-specific cache directory
+.gradle
