@@ -1,0 +1,19 @@
+# Dockerfile.spark
+FROM apache/spark:3.5.1
+
+USER root
+
+# 패키지 설치를 위해 pip 업그레이드 (선택사항이지만 권장)
+RUN pip install --upgrade pip
+
+# Python 패키지 설치
+COPY requirements_spark.txt /tmp/requirements_spark.txt
+RUN pip install --no-cache-dir -r /tmp/requirements_spark.txt
+
+# JupyterLab 설치 (옵션)
+RUN pip install jupyterlab
+
+WORKDIR /workspace
+
+# Spark UI ports
+EXPOSE 8888 8080 7077 4040

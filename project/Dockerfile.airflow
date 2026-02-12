@@ -1,0 +1,24 @@
+# Dockerfile.airflow
+FROM apache/airflow:2.10.4-python3.10
+
+USER root
+
+# 1. 필수 시스템 패키지 및 Java 17 설치 (Spark 통신용)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    openjdk-17-jre-headless \
+    && apt-get autoremove -yqq --purge \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. 환경변수 설정 (Java 경로 및 Airflow 실행경로 강제 지정)
+# macOS M1/M2/M3는 arm64 경로를 사용합니다.
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+ENV PATH="${PATH}:/home/airflow/.local/bin"
+
+# 3. 다시 일반 유저로 전환
+USER airflow
+
+# 4. 라이브러리 설치
+COPY requirements.txt /requirements.txt
+RUN pip install --no-cache-dir --user -r /requirements.txt
