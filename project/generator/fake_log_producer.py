@@ -2,6 +2,7 @@ import time
 import json
 import random
 import uuid
+from pathlib import Path
 from datetime import datetime
 from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
@@ -52,6 +53,7 @@ def generate_user_data():
 if __name__ == "__main__":
     print(f"[Start] sending {TOPIC_NAME} topic!")
     producer=None
+    Path(".stop_signal").unlink(missing_ok=True)
     for i in range(10):
         try:
             print(f"Kafka랑 연결중.. ({i+1}/10)")
@@ -72,10 +74,18 @@ if __name__ == "__main__":
     
     try:
         while True:
+            stop_file=Path(".stop_signal")
+            if stop_file.exists():
+                print("Dashboard에서 종료버튼 클릭! Producer를 멈춥니다.")
+                stop_file.unlink()
+                break
+            
             log=generate_user_data()
             producer.send(TOPIC_NAME,value=log)
-            print(f"Sent:{log['order_id']}")
+            print(f" 전송 중: {log['customer_name']}님이 {log['product_name']}을 구매함 (금액: {log['total_amount']})")
             time.sleep(1)
     except KeyboardInterrupt:
         print("Stop..!")
+        producer.close()
+    finally:
         producer.close()
