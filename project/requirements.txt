@@ -5,3 +5,8 @@ apache-airflow-providers-amazon
 
 pandas
 numpy
+kafka-python     
+watchdog 
+plotly==6.3.1 
+matplotlib==3.9.4
+streamlit==1.50.0 
