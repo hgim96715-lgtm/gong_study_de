@@ -29,7 +29,7 @@ def generate_user_data():
     total_amount=price*quantity
     
     data={
-        "event_uuid":str(uuid.uuid4()),
+        "event_id":str(uuid.uuid4()),
         "order_id":str(uuid.uuid4()),
         "customer_id":str(uuid.uuid4()),
         "product_id":str(uuid.uuid4()),
