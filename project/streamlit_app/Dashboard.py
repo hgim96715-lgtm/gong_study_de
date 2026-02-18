@@ -5,6 +5,12 @@ import json
 import pandas as pd
 import time
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+import plotly.express as px
+
+load_dotenv()
 
 st.set_page_config(
     page_title="Data PipeLine",
@@ -32,7 +38,7 @@ with m4:
 
 st.divider()
 
-st.subheader("카테고리별 실시간 통계")
+
 category_table_slot=st.empty()
 
 st.markdown("### Streaming Data & Logs")
@@ -45,8 +51,44 @@ with col_chart:
 with col_log:
     st.caption("Data Log(실시간)")
     log_placeholder=st.empty()
+    
+
+st.divider()
+
+db_url = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+engine = create_engine(db_url)
 
 
+st.subheader("Spark Batch Analysis")
+db_report_col1,db_report_col2=st.columns(2)
+
+with db_report_col1:
+    st.caption("카테고리별 누적 집계")
+    db_table_slot=st.empty()
+    data_db_sales = st.empty()
+    
+with db_report_col2:
+    db_chart_slot=st.empty()
+    
+try:
+    df_db = pd.read_sql("SELECT * FROM report_category_sales", engine)
+    total_db_sales = df_db['total_sales'].sum()
+    data_db_sales.metric("총 매출액", f"{int(total_db_sales):,}원")
+    db_table_slot.dataframe(df_db, use_container_width=True, hide_index=True)
+    fig=px.bar(
+        df_db,
+        x="category",
+        y="total_sales",
+        title="카테고리별 매출",
+        color="category",
+        text="total_sales"
+    )
+    fig.update_traces(texttemplate='%{text:,}')
+    fig.update_layout(showlegend=True, xaxis_title="카테고리", yaxis_title="매출액")
+    db_chart_slot.plotly_chart(fig, use_container_width=True)
+except Exception as e:
+    db_table_slot.warning(f"DB 에러: {e}")
+    
 
 
 # kafka Consumer
@@ -113,12 +155,15 @@ for message in consumer:
     category_table_slot.dataframe(df_summary,use_container_width=True,hide_index=True)
     
     
-    
     numeric_cols=df.select_dtypes(include=['number']).columns
+    
+    
     if not df.empty and len(numeric_cols)>0:
         chart_placeholder.line_chart(df[[numeric_cols[0]]])
         
     log_placeholder.dataframe(df.tail(10).iloc[::-1],use_container_width=True)
+    
+    
     
     time.sleep(0.05)
         

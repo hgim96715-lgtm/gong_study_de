@@ -266,6 +266,14 @@ services:
       - "9090:8080" # 웹 UI (Airflow 8080과 충돌 방지)
       - "7077:7077" # 내부 통신용
       - "4040:4040" # Spark Context UI
+    volumes:
+      - ./spark_app:/opt/spark/apps
+      - ./spark_drivers/postgresql-42.7.1.jar:/opt/spark/jars/postgresql-42.7.1.jar
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
     networks:
       - data-network
 
@@ -281,6 +289,8 @@ services:
       - spark-master
     volumes:
       - ./data:/workspace/data
+      - ./spark_app:/opt/spark/apps
+      - ./spark_drivers/postgresql-42.7.1.jar:/opt/spark/jars/postgresql-42.7.1.jar
     networks:
       - data-network
 
