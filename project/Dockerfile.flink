@@ -29,9 +29,7 @@ RUN pip3 install --no-cache-dir --default-timeout=1000 \
     apache-flink==1.18.1 \
     typing_extensions
 
-
-RUN curl -o /opt/flink/lib/flink-sql-connector-kafka-3.0.0-1.18.jar \
-    https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/3.0.0-1.18/flink-sql-connector-kafka-3.0.0-1.18.jar
+COPY lib/flink-sql-connector-kafka-3.1.0-1.18.jar /opt/flink/lib/
 
 
 ENV PYTHON_EXECUTABLE=/usr/bin/python3
