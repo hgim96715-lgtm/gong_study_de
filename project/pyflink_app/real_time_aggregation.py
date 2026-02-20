@@ -8,6 +8,8 @@ def real_time_aggregation():
     
     print(">>> PyFlink Start!!")
     
+    
+    
     t_env.execute_sql("""
                       CREATE TABLE source_table(
                           order_id STRING,
@@ -41,18 +43,24 @@ def real_time_aggregation():
         
     
     t_env.execute_sql("""
-                      CREATE TABLE print_sink(
+                      CREATE TABLE jdbc_sink(
                           window_start TIMESTAMP(3),
                           window_end TIMESTAMP(3),
                           category STRING,
                           total_sales BIGINT,
                           total_orders BIGINT
                       ) WITH(
-                          'connector'='print'
+                          'connector'='jdbc',
+                          'url'='jdbc:postgresql://postgres:5432/airflow',
+                          'table-name'='sales_aggregation',
+                          'username'='airflow',
+                          'password'='airflow',
+                          'driver'='org.postgresql.Driver'
                       )
                 """)
     
-    t_env.execute_sql(f"INSERT INTO print_sink {agg_query}")
+    t_env.execute_sql(f"INSERT INTO jdbc_sink {agg_query}")
     
 if __name__=='__main__':
     real_time_aggregation()
+    

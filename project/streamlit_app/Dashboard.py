@@ -90,6 +90,23 @@ except Exception as e:
     db_table_slot.warning(f"DB 에러: {e}")
     
 
+st.divider()
+st.subheader("PyFlink 1분마다 집계 하는 현황판")
+flink_col1,flink_col2=st.columns(2)
+
+with flink_col1:
+    st.caption("최근 1분 카테고리별 매출 (sales_aggregation 테이블)")
+    flink_table_slot=st.empty()
+    
+with flink_col2:
+    flink_chart_slot=st.empty()
+    
+    
+
+
+
+
+
 
 # kafka Consumer
 try:
@@ -116,6 +133,8 @@ if "user_logs" not in st.session_state:
     
 total_count=0
 
+loop_count=0
+
 if st.sidebar.button("모니터링 그만하고 싶다면 클릭"):
     Path(".stop_signal").write_text("stop",encoding="utf-8")
     st.toast("종료버튼 클릭했습니다.")
@@ -127,6 +146,7 @@ for message in consumer:
     # data_connect_status.success(f"데이터 수신 중! 마지막 ID: {row['order_id'][:8]}...")
     st.session_state.user_logs.append(row)
     total_count+=1
+    loop_count+=1
     
     if len(st.session_state.user_logs)>100:
         st.session_state.user_logs.pop(0)
@@ -163,7 +183,33 @@ for message in consumer:
         
     log_placeholder.dataframe(df.tail(10).iloc[::-1],use_container_width=True)
     
-    
+    #==========새로 추가된 부분 PyFlink==================# 
+    if loop_count% 20==0:
+        try:
+            flink_query="""
+                SELECT category,total_sales,total_orders,window_end
+                FROM sales_aggregation
+                WHERE window_end=(SELECT MAX(window_end) FROM sales_aggregation)
+                ORDER BY total_sales DESC
+            """
+            df_flink=pd.read_sql(flink_query,engine)
+        
+            if not df_flink.empty:
+                flink_table_slot.dataframe(df_flink,use_container_width=True,hide_index=True)
+                
+                latest_time=df_flink['window_end'].iloc[0].strftime('%H:%M:%S')
+                fig_flink=px.pie(
+                    df_flink,
+                    names='category',
+                    values='total_sales',
+                    title=f"최근 1분 매출 비율 ({latest_time}기준)",
+                    hole=0.4,
+                    color='category'
+                )
+                flink_chart_slot.plotly_chart(fig_flink,use_container_width=True,key=f"flink_pie_{loop_count}")
+        
+        except Exception as e:
+            flink_table_slot.warning(f"Flink대기중...{e}")
     
     time.sleep(0.05)
         
