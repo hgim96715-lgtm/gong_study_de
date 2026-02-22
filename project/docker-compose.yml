@@ -331,6 +331,8 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - data-network
 
 # ==========================================
 # [섹션 3] 볼륨 정의
