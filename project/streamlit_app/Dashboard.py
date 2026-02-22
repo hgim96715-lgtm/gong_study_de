@@ -59,36 +59,52 @@ db_url = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.ge
 engine = create_engine(db_url)
 
 
-st.subheader("Spark Batch Analysis")
-db_report_col1,db_report_col2=st.columns(2)
 
-with db_report_col1:
-    st.caption("카테고리별 누적 집계")
-    db_table_slot=st.empty()
-    data_db_sales = st.empty()
+
+st.subheader("Spark Batch Analysis (Batch Layer)")
+
+tab1, tab2 = st.tabs(["PostgreSQL 기반", " Data Lake(MinIO) 기반"])
+
+with tab1:
+    st.caption("PostgreSQL의 원본 데이터를  분석한 결과")
+    db_report_col1, db_report_col2 = st.columns(2)
     
-with db_report_col2:
-    db_chart_slot=st.empty()
+    try:
+        df_db = pd.read_sql("SELECT * FROM report_category_sales", engine)
+        with db_report_col1:
+            total_db_sales = df_db['total_sales'].sum()
+            st.metric("DB 기반 총 매출액", f"{int(total_db_sales):,}원")
+            st.dataframe(df_db, use_container_width=True, hide_index=True)
+        
+        with db_report_col2:
+            fig = px.bar(df_db, x="category", y="total_sales", title="카테고리별 매출 (DB)", 
+                         color="category", text_auto=',.0f')
+            st.plotly_chart(fig, use_container_width=True, key="db_chart")
+    except Exception as e:
+        st.warning(f"DB 기반 리포트 대기 중... ({e})")
+
+with tab2:
+    st.caption("MinIO에 저장된 Parquet 파일을 Spark로 분석한 결과")
+    minio_report_col1, minio_report_col2 = st.columns(2)
     
-try:
-    df_db = pd.read_sql("SELECT * FROM report_category_sales", engine)
-    total_db_sales = df_db['total_sales'].sum()
-    data_db_sales.metric("총 매출액", f"{int(total_db_sales):,}원")
-    db_table_slot.dataframe(df_db, use_container_width=True, hide_index=True)
-    fig=px.bar(
-        df_db,
-        x="category",
-        y="total_sales",
-        title="카테고리별 매출",
-        color="category",
-        text="total_sales"
-    )
-    fig.update_traces(texttemplate='%{text:,}')
-    fig.update_layout(showlegend=True, xaxis_title="카테고리", yaxis_title="매출액")
-    db_chart_slot.plotly_chart(fig, use_container_width=True)
-except Exception as e:
-    db_table_slot.warning(f"DB 에러: {e}")
-    
+    try:
+        df_minio = pd.read_sql("SELECT * FROM report_category_sales_minio", engine)
+        with minio_report_col1:
+            total_minio_sales = df_minio['total_sales'].sum()
+            st.metric("Data Lake 기반 총 매출액", f"{int(total_minio_sales):,}원")
+            st.dataframe(df_minio, use_container_width=True, hide_index=True)
+        
+        with minio_report_col2:
+            fig_minio = px.bar(df_minio, x="category", y="total_sales", title="카테고리별 매출 (MinIO)", 
+                               color="category", text_auto=',.0f', color_discrete_sequence=px.colors.qualitative.Pastel)
+            st.plotly_chart(fig_minio, use_container_width=True, key="minio_chart")
+    except Exception as e:
+        st.warning(f"Data Lake 리포트를 생성해주세요! (Spark Job 실행 필요)")
+
+st.divider()
+
+
+
 
 st.divider()
 st.subheader("PyFlink 1분마다 집계 하는 현황판")
