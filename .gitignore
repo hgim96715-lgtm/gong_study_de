@@ -206,4 +206,5 @@ airflow-webserver.pid
 # =======================================================
 .streamlit/cache/   
 .streamlit/secrets.toml  # 보안상 절대 올리면 안 됨
+.streamlit/config.toml
 
