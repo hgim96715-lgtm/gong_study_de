@@ -205,6 +205,6 @@ airflow-webserver.pid
 #  [Streamlit] Streamlit 실행 시 생기는 캐시 및 보안 파일
 # =======================================================
 .streamlit/cache/   
-.streamlit/secrets.toml  # 보안상 절대 올리면 안 됨
-.streamlit/config.toml
+.streamlit/secrets.toml 
+
 
