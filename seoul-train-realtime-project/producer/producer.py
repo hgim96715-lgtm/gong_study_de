@@ -10,7 +10,7 @@ from main import TrainInfo
 
 load_dotenv()
 
-KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 POLL_INTERVAL   = 60
 MY_STATION      = "서울"
 MAX_TARGETS     = 5
@@ -111,7 +111,7 @@ class TrainProducer:
         for item in items:
             item["created_at"]=datetime.now().isoformat()
             item["data_type"]="schedule"
-            self._send("train-scedule",item)
+            self._send("train-schedule",item)
             
         self.producer.flush()
         self.daily_schedule=items
@@ -151,15 +151,16 @@ class TrainProducer:
         yesterday=(datetime.now()-timedelta(days=1)).strftime("%Y%m%d")
         print(f"\n[지연분석] {yesterday}분석 시작!")
         
-        plan_itmes=self.train_info.get_train_schedule(yesterday)
+        plan_items=self.train_info.get_train_schedule(yesterday)
         
-        if not plan_itmes:
+        if not plan_items:
             print(f"[지연분석] 운행계획 데이터 없음")
             return
-        
+        print(f"👉 [디버그] 전체 운행계획 수: {len(plan_items)}개")
         plan_map={
-            item.get("trn_no"):item for item in plan_itmes if item.get("dptre_stn_nm")==MY_STATION
+            item.get("trn_no"):item for item in plan_items if item.get("dptre_stn_nm")==MY_STATION
         }
+        print(f"👉 [디버그] '{MY_STATION}' 출발 대상 기차 수: {len(plan_map)}개")
         count=0
         
         for trn_no,plan in plan_map.items():
