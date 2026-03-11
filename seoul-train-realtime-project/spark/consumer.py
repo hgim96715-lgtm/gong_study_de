@@ -3,14 +3,14 @@ from pyspark.sql import SparkSession,DataFrame
 from pyspark.sql.functions import col, from_json, current_timestamp
 from pyspark.sql.types import (
     StructType, StructField,
-    StringType, IntegerType, TimestampType
+    StringType, IntegerType
 )
 
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
-    print("dotenv 패키지가 없습니다. OS 환경변수를 직접 사용합니다.")
+    pass
 
 KAFKA_BOOTSTRAP=os.getenv("KAFKA_BOOTSTRAP_SERVERS","kafka:9092")
 PG_USER=os.getenv("POSTGRES_USER","train_user")
@@ -203,7 +203,7 @@ class TrainConsumer:
         print("[train-schedule] 모니터링 시작")
         print("[train-realtime] 모니터링 시작")
         print("[train-delay] 모니터링 시작")
-        print("\n Spark Web UI 모니터링 → http://localhost:8080\n")
+        print("\n Spark Web UI 모니터링 → http://localhost:4040\n")
         
         self.spark.streams.awaitAnyTermination()
         

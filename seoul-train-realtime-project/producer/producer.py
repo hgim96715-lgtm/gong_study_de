@@ -18,36 +18,58 @@ MAX_TARGETS     = 5
 
 # utils
 
-def estimate_status(plan_dep:str,plan_arr:str)->dict:
-    now=datetime.now()
-    today=now.strftime("%Y-%m-%d")
+
+def estimate_status(plan_dep: str, plan_arr: str) -> dict:
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
+    
     try:
-        
         dep_dt = datetime.strptime(f"{today} {plan_dep}", "%Y-%m-%d %H:%M")
         arr_dt = datetime.strptime(f"{today} {plan_arr}", "%Y-%m-%d %H:%M")
         
-    except ValueError as e :
-        print(f"  🚨 [디버깅] 시간 변환 실패! 입력값 👉 plan_dep: '{plan_dep}', plan_arr: '{plan_arr}' | 에러 원인: {e}")
+
+        if arr_dt < dep_dt:
+            arr_dt += timedelta(days=1)
+            
+    except ValueError as e:
+        print(f"  🚨 [디버깅] 시간 변환 실패: {e}")
         return {"status": "시각 정보 없음", "progress_pct": 0}
     
-    diff_dep=(dep_dt-now).total_seconds()/60
-    diff_arr=(now-arr_dt).total_seconds()/60
-    total_mins=(arr_dt-dep_dt).total_seconds()/60
-    progress=max(0,min(100,int((now-dep_dt).total_seconds()/60/total_mins*100))) if total_mins>0 else 0
+    diff_dep = (dep_dt - now).total_seconds() / 60
+    diff_arr = (arr_dt - now).total_seconds() / 60
     
-    if diff_dep>15:
-        mins=int(diff_dep)
-        time_str=f"{mins//60}시간 {mins%60}분" if mins>=60 else f"{mins}분"
-        status=f"출발 {time_str}전 (대기중)"
-    elif 0<diff_dep<=15:
-        status=f"곧 출발 ({int(diff_dep)}분 후)- 탑승 중"
-    # 실시간 운행정보가 없기때문에 실시간 지연은 안됨
-    elif diff_dep<=0 and diff_arr>0:
-        remaining=int(diff_arr)
-        status=f"운행 중 ({progress}%진행 , 약 {remaining}분 후 도착예정)"
+    total_mins = (arr_dt - dep_dt).total_seconds() / 60
+    elapsed_mins = (now - dep_dt).total_seconds() / 60
+    progress = max(0, min(100, int((elapsed_mins / total_mins) * 100))) if total_mins > 0 else 0
+    
+    def format_time_diff(mins:int)->str:
+        if mins >=60:
+            hours = mins // 60
+            minutes = mins % 60
+            return f"{hours}시간" if minutes == 0 else f"{hours}시간 {minutes}분"
+        else:
+            return f"{mins}분"
+    
+    # 상태 텍스트 분기
+    if diff_dep > 15:
+        mins = int(diff_dep)
+        time_str = format_time_diff(mins)
+        status = f"출발 {time_str}전 (대기중)"
+        
+    elif 0 < diff_dep <= 15:
+        status = f"곧 출발 ({int(diff_dep)}분 후)- 탑승 중"
+        
+    elif diff_dep <= 0 and diff_arr > 0:
+        
+        rem_str = format_time_diff(int(diff_arr))
+        
+        
+        status = f"운행 중 ({progress}%진행 , 약 {rem_str} 후 도착예정)"
+        
     else:
-        status=f"도착 완료 ({int(abs(diff_arr))}분 전)"
-    return {"status":status,"progress_pct":progress}
+        status = f"도착 완료 ({int(abs(diff_arr))}분 전)"
+        
+    return {"status": status, "progress_pct": progress}
 
 # def calc_delay_min(plan_hm:str,actual_hm:str)->int|None:
 def calc_delay_min(plan_hm: str, actual_hm: str) -> Optional[int]:
@@ -73,6 +95,30 @@ def delay_label(mins: Optional[int]) -> str:
     if mins<=5: return f"소폭지연(+{mins}분)"
     if mins<=30: return f"지연(+{mins}분)"
     return f"대폭지연 (+{mins}분)"
+
+# 새로 추가한 노선 판별함수 (실시간API가 없으므로 노선미상이 될수 밖에 없는것을 추정해서 추가)
+STATION_ROUTE = {
+    "부산": "경부선",
+    "동대구": "경부선",
+    "대구": "경부선",
+    "대전": "경부선",
+    "울산": "경부선",
+    "신경주": "경부선",
+    "구포": "경부선",
+    "밀양": "경부선",
+
+    "광주송정": "호남선",
+    "목포": "호남선",
+    "익산": "호남선",
+    "정읍": "호남선",
+    "나주": "호남선",
+}
+
+def get_route_name(arvl_stn_nm: str) -> str:
+    return STATION_ROUTE.get(arvl_stn_nm, "일반노선")
+
+
+    
 
 
 class TrainProducer:
@@ -123,7 +169,8 @@ class TrainProducer:
         trn_no=target.get("trn_no","?")
         dep_name=target.get("dptre_stn_nm","?")
         arr_name=target.get("arvl_stn_nm","?")
-        mrnt_nm=target.get("mrnt_nm","노선미상")
+        arvl_stn_nm = target.get("arvl_stn_nm", "")
+        mrnt_nm = target.get("mrnt_nm") or get_route_name(arvl_stn_nm)
         plan_dep=TrainInfo._format_dt(target.get("trn_plan_dptre_dt",""),"--:--")
         plan_arr=TrainInfo._format_dt(target.get("trn_plan_arvl_dt",""),"--:--")
         
