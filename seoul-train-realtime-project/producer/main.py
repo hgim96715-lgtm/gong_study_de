@@ -152,7 +152,7 @@ if __name__=="__main__":
                 realtime_items=train_info.get_train_realtime(yesterday, target_trn_no)
                 
                 if realtime_items:
-                    for item in realtime_items[:5]:
+                    for item in realtime_items[:5]: 
                         real_dep=TrainInfo._format_dt(item.get("trn_dptre_dt"),"출발 전")
                         real_arr=TrainInfo._format_dt(item.get("trn_arvl_dt"),"운행중")
                         

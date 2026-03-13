@@ -42,7 +42,7 @@ SCHEMA_SCHEDULE = StructType([
 
 SCHEMA_REALTIME = StructType([
     StructField("trn_no",        StringType()),
-    StructField("mrnt_nm",       StringType()),
+    # StructField("mrnt_nm",       StringType()),
     StructField("dptre_stn_nm",  StringType()),
     StructField("arvl_stn_nm",   StringType()),
     StructField("plan_dep",      StringType()),
@@ -150,7 +150,7 @@ class TrainConsumer:
         )
         
         final=parsed.select(
-            "trn_no", "mrnt_nm",
+            "trn_no",
             "dptre_stn_nm", "arvl_stn_nm",
             "plan_dep", "plan_arr",
             "status", "progress_pct",

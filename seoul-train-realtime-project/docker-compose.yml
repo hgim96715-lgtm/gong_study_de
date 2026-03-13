@@ -82,10 +82,26 @@ services:
       - spark-master
     networks:
       - train-network
+  superset:
+    image: apache/superset:3.1.0
+    container_name: train-superset
+    ports:
+      - "8088:8088" # Superset Web UI
+    env_file:
+      - .env # SUPERSET_SECRET_KEY 포함
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+    volumes:
+      - superset_data:/app/superset_home
+    networks:
+      - train-network
+    depends_on:
+      - postgres
 
 volumes:
   kafka_data:
   postgres_data:
+  superset_data:
 
 
 networks:

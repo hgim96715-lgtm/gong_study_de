@@ -13,7 +13,7 @@ load_dotenv()
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 POLL_INTERVAL   = 60
 MY_STATION      = "서울"
-MAX_TARGETS     = 5
+# MAX_TARGETS     = 5
 
 
 # utils
@@ -43,7 +43,7 @@ def estimate_status(plan_dep: str, plan_arr: str) -> dict:
     progress = max(0, min(100, int((elapsed_mins / total_mins) * 100))) if total_mins > 0 else 0
     
     def format_time_diff(mins:int)->str:
-        if mins >=60:
+        if mins >=60:        
             hours = mins // 60
             minutes = mins % 60
             return f"{hours}시간" if minutes == 0 else f"{hours}시간 {minutes}분"
@@ -52,7 +52,7 @@ def estimate_status(plan_dep: str, plan_arr: str) -> dict:
     
     # 상태 텍스트 분기
     if diff_dep > 15:
-        mins = int(diff_dep)
+        mins = max(1, int(diff_dep)) # 소수점 때문에 1분 미만은 1분으로 표시, 0분은 안되도록
         time_str = format_time_diff(mins)
         status = f"출발 {time_str}전 (대기중)"
         
@@ -96,26 +96,27 @@ def delay_label(mins: Optional[int]) -> str:
     if mins<=30: return f"지연(+{mins}분)"
     return f"대폭지연 (+{mins}분)"
 
-# 새로 추가한 노선 판별함수 (실시간API가 없으므로 노선미상이 될수 밖에 없는것을 추정해서 추가)
-STATION_ROUTE = {
-    "부산": "경부선",
-    "동대구": "경부선",
-    "대구": "경부선",
-    "대전": "경부선",
-    "울산": "경부선",
-    "신경주": "경부선",
-    "구포": "경부선",
-    "밀양": "경부선",
+# 새로 추가한 노선 판별함수 (실시간API가 없으므로 노선미상이 될수 밖에 없는것을 추정해서 추가)>너무 안 맞아서 2024-06-17 삭제
 
-    "광주송정": "호남선",
-    "목포": "호남선",
-    "익산": "호남선",
-    "정읍": "호남선",
-    "나주": "호남선",
-}
+# STATION_ROUTE = {
+#     "부산": "경부선",
+#     "동대구": "경부선",
+#     "대구": "경부선",
+#     "대전": "경부선",
+#     "울산": "경부선",
+#     "신경주": "경부선",
+#     "구포": "경부선",
+#     "밀양": "경부선",
 
-def get_route_name(arvl_stn_nm: str) -> str:
-    return STATION_ROUTE.get(arvl_stn_nm, "일반노선")
+#     "광주송정": "호남선",
+#     "목포": "호남선",
+#     "익산": "호남선",
+#     "정읍": "호남선",
+#     "나주": "호남선",
+# }
+
+# def get_route_name(arvl_stn_nm: str) -> str:
+#     return STATION_ROUTE.get(arvl_stn_nm, "일반노선")
 
 
     
@@ -170,7 +171,7 @@ class TrainProducer:
         dep_name=target.get("dptre_stn_nm","?")
         arr_name=target.get("arvl_stn_nm","?")
         arvl_stn_nm = target.get("arvl_stn_nm", "")
-        mrnt_nm = target.get("mrnt_nm") or get_route_name(arvl_stn_nm)
+        # mrnt_nm = target.get("mrnt_nm") or get_route_name(arvl_stn_nm)
         plan_dep=TrainInfo._format_dt(target.get("trn_plan_dptre_dt",""),"--:--")
         plan_arr=TrainInfo._format_dt(target.get("trn_plan_arvl_dt",""),"--:--")
         
@@ -178,7 +179,7 @@ class TrainProducer:
         
         self._send("train-realtime",{
             "trn_no":trn_no,
-            "mrnt_nm":mrnt_nm,
+            # "mrnt_nm":mrnt_nm,
             "dptre_stn_nm":dep_name,
             "arvl_stn_nm":arr_name,
             "plan_dep":plan_dep,
@@ -190,7 +191,7 @@ class TrainProducer:
         })
         
         print(
-            f"[KTX {trn_no}호 열차] {plan_dep}출발 | {mrnt_nm:<6} |"
+            f"[KTX {trn_no}호 열차] {plan_dep}출발 |"
             f"{dep_name:<4} ➡️ {arr_name:<4} | {estimated['status']}"
         )
         
@@ -225,7 +226,8 @@ class TrainProducer:
             
             plan_dep=TrainInfo._format_dt(plan.get("trn_plan_dptre_dt",""),"--:--")
             plan_arr=TrainInfo._format_dt(plan.get("trn_plan_arvl_dt",""),"--:--")
-            # get()의 기본값과 else 뒤의 값을 모두 빈 문자열("")로 바꿨습니다.
+            
+
             actual_dep = TrainInfo._format_dt(actual_dep_item.get("trn_dptre_dt", "") if actual_dep_item else "", "--:--")
             actual_arr = TrainInfo._format_dt(actual_arr_item.get("trn_arvl_dt", "") if actual_arr_item else "", "--:--")
             
