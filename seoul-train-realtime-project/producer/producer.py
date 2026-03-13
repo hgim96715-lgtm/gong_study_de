@@ -13,7 +13,7 @@ load_dotenv()
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 POLL_INTERVAL   = 60
 MY_STATION      = "서울"
-# MAX_TARGETS     = 5
+MAX_TARGETS     = 5
 
 
 # utils
