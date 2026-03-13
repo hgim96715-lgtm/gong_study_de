@@ -40,7 +40,7 @@ def estimate_status(plan_dep: str, plan_arr: str) -> dict:
     
     total_mins = (arr_dt - dep_dt).total_seconds() / 60
     elapsed_mins = (now - dep_dt).total_seconds() / 60
-    progress = max(0, min(100, int((elapsed_mins / total_mins) * 100))) if total_mins > 0 else 0
+    progress = max(0, min(100, round((elapsed_mins / total_mins) * 100))) if total_mins > 0 else 0
     
     def format_time_diff(mins:int)->str:
         if mins >=60:        
@@ -52,13 +52,16 @@ def estimate_status(plan_dep: str, plan_arr: str) -> dict:
     
     # 상태 텍스트 분기
     if diff_dep > 15:
-        mins = max(1, int(diff_dep)) # 소수점 때문에 1분 미만은 1분으로 표시, 0분은 안되도록
+        mins = int(diff_dep)
         time_str = format_time_diff(mins)
         status = f"출발 {time_str}전 (대기중)"
         
-    elif 0 < diff_dep <= 15:
+    elif 0< diff_dep<=1:
+        status="곧 출발 (탑승 마감)"
+    
+    elif 1 < diff_dep <= 15:
         status = f"곧 출발 ({int(diff_dep)}분 후)- 탑승 중"
-        
+ 
     elif diff_dep <= 0 and diff_arr > 0:
         
         rem_str = format_time_diff(int(diff_arr))
@@ -136,6 +139,26 @@ class TrainProducer:
         self.current_date=""
         self.delay_done_today=False
         
+        # 다시 producer 실행할때 데이터가 뻥튀기 되는 문제 방지를 위해
+        self.state_file="producer_state.json"
+        self.state=self._load_state()
+        
+    def _load_state(self)->dict:
+        if os.path.exists(self.state_file):
+            try:
+                with open(self.state_file,"r",encoding="utf-8") as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                print("상태 파일 로드 실패, 초기 상태로 시작")
+                return {}
+        else:
+            return {}
+    
+    def _save_state(self):
+        with open(self.state_file,"w",encoding="utf-8") as f:
+            json.dump(self.state,f,ensure_ascii=False,indent=2)
+        
+        
     def _send(self,topic:str,message:dict):
         try:
             future=self.producer.send(topic,value=message)
@@ -147,12 +170,18 @@ class TrainProducer:
             
     
     def run_schedule(self,run_ymd:str):
-        print(f"\n[운행게획] {run_ymd}발행시작(하루1회)")
+        print(f"\n[운행계획] {run_ymd}발행시작(하루1회)")
         
         items=self.train_info.get_train_schedule(run_ymd)
         
         if not items:
             print("[운행계획] 데이터가 없습니다")
+            return
+        
+        self.daily_schedule=items
+        
+        if self.state.get("last_schedule_date")==run_ymd:
+            print(f"[운행계획] 이미 {run_ymd} 데이터 발행한 기록이 있습니다. 중복발행 방지 위해 스킵합니다.")
             return
         
         for item in items:
@@ -163,6 +192,9 @@ class TrainProducer:
         self.producer.flush()
         self.daily_schedule=items
         print(f"[운행계획]-> {len(self.daily_schedule)}건 발행완료!")
+        
+        self.state["last_schedule_date"]=run_ymd
+        self._save_state()
         
     # 실시간이 없어서 추정  
     def run_estimated(self,target:dict):
@@ -198,6 +230,12 @@ class TrainProducer:
     def run_delay_analysis(self):
         yesterday=(datetime.now()-timedelta(days=1)).strftime("%Y%m%d")
         print(f"\n[지연분석] {yesterday}분석 시작!")
+        
+        # 이미 지연분석 완료한 날짜인지 체크
+        if self.state.get("last_delay_analysis_date")==yesterday:
+            print(f"[지연분석] 이미 {yesterday} 분석한 기록이 있습니다. 중복분석 방지 위해 스킵합니다.")
+            self.delay_done_today=True
+            return
         
         plan_items=self.train_info.get_train_schedule(yesterday)
         
@@ -262,6 +300,9 @@ class TrainProducer:
         self.producer.flush()
         print(f"[지연분석]{count}건 발행완료")
         self.delay_done_today=True
+        
+        self.state["last_delay_analysis_date"]=yesterday
+        self._save_state()
         
     
     def run(self):
